@@ -1,0 +1,17 @@
+{
+  "name": "leagueSimulator",
+  "version": "1.0.0",
+  "description": "Simulador de liga de fútbol",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/M0D91/leagueSimulator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
+}

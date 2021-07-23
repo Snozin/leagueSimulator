@@ -1,0 +1,18 @@
+export const teams = [
+  "Albania",
+  "Wales",
+  "Czech Republic",
+  "Italy",
+  "Serbia",
+  "Armenia",
+  "Montenegro",
+  "Malta",
+  "Spain",
+  "Poland",
+  "San Marino",
+  "Austria",
+  "France",
+  "Germany",
+  "Netherlands",
+  "Norway",
+];
