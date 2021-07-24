@@ -11,10 +11,10 @@ const teams = teamNames.map((team) => {
 
 // console.log("name:", teams);
 // console.log("name:", prr.getName());
-// console.log("name:", liga.setPlayOffs([{name: 'Paco'},{name:'Hulio'},{name:'Juan'},{name:'Ana'},{name:'Tonio'},{name:'Jordi'},{name:'Alice'}]));
-// console.log(liga.setPlayOffs(teams));
+// console.log("name:", liga.setPlayOff([{name: 'Paco'},{name:'Hulio'},{name:'Juan'},{name:'Ana'},{name:'Tonio'},{name:'Jordi'},{name:'Alice'}]));
+// console.log(liga.setPlayOff(teams));
 
-liga.setPlayOffs(teams);
+liga.setPlayOff(teams);
 
 
 
