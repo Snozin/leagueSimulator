@@ -12,9 +12,14 @@ export class Team {
   }
 
   play() {
-    //Retorna un número aleatorio de goles entre 0 y 10
+    // Retorna un número aleatorio de goles entre 0 y 10
     const goals = Math.floor(Math.random() * 11);
     return goals;
-    console.log("Toy juegando, ", goals);
+  }
+
+  setGoals(team, goals, goalsAgainst) {
+    // Asigna los goles a favor y en contra a cada equipo
+    team.goals += goals
+    team.goalsAgainst += goalsAgainst
   }
 }
