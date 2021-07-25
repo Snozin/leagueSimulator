@@ -3,6 +3,8 @@ export class League {
     this.name = name;
     this.randomizedTeams = [];
     this.groups = [];
+    this.pointsPerWin = 3;
+    this.pointsPerDraw = 1;
 
     this.playOffWinners = [];
     this.quarterWinners = [];
@@ -16,10 +18,18 @@ export class League {
     console.log("||***|| Comienza el torneo! ||***||");
     console.log("====================================\n");
 
+    // Mezclar aleatoriamente el array de equipos
     this.raffleTeams(teams);
+    // Crear los 6 grupos de 4 equipos
     this.makeGroups(this.randomizedTeams);
-    console.log(this.groups)
-    // console.table(this.groups, ['members'])
+
+    // Fase de grupos todos contra todos
+    this.groups.forEach((group) => {
+      this.roundRobin(group.members);
+    });
+
+    
+
 
     // console.log("==================");
     // console.log("|!| Participantes: \n");
@@ -43,7 +53,6 @@ export class League {
   }
 
   raffleTeams(teams = []) {
-    // Mezcla aleatoriamente el array recibido
     if (teams.length > 0) {
       const randomIndex = Math.floor(Math.random() * teams.length);
 
@@ -149,22 +158,22 @@ export class League {
     return winners;
   }
 
-  // Crea los 6 grupos de 4 equipos
+  
   makeGroups(teams = [], group = 0) {
     // Condición de salida de la recursividad
     if (teams.length == 0) {
-      return console.log("Grupos finalizados");
+      return;
     }
 
     // El parámetro group recibido será el nombre del grupo
     const names = {
-      0: 'A',
-      1: 'B',
-      2: 'C',
-      3: 'D',
-      4: 'E',
-      5: 'F',
-    }
+      0: "A",
+      1: "B",
+      2: "C",
+      3: "D",
+      4: "E",
+      5: "F",
+    };
 
     const newGroup = {
       group: `${names[group]}`,
@@ -181,6 +190,23 @@ export class League {
     // Añadir cada grupo de equipos al array final y repetir
     this.groups.push(newGroup);
     this.makeGroups(teams, ++group);
+  }
+
+  
+  roundRobin(teams = [1, 2, 3, 4]) {
+    for (let i = 0; i < teams.length - 1; i++) {
+      console.log(teams[i], "VS ", teams[teams.length - 1]);
+      
+
+      if (teams[i] !== teams[teams.length - 2]) {
+        console.log(teams[i], "VS ", teams[teams.length - 2]);
+      } else {
+        
+        console.log(teams[0], "VS ", teams[1]);
+      }
+    }
+
+    console.log("SALTO: \n\n\n");
   }
 
   displayResults() {
