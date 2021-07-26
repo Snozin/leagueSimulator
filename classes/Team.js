@@ -5,21 +5,29 @@ export class Team {
     this.points = 0;
     this.goals = 0;
     this.goalsAgainst = 0;
+    this.goalsDiff = 0;
   }
 
   getName() {
     return this.name;
   }
 
+  // Retorna un número aleatorio de goles entre 0 y 10
   play() {
-    // Retorna un número aleatorio de goles entre 0 y 10
     const goals = Math.floor(Math.random() * 11);
     return goals;
   }
 
-  setGoals(team, goals, goalsAgainst) {
-    // Asigna los goles a favor y en contra a cada equipo
-    team.goals += goals
-    team.goalsAgainst += goalsAgainst
+  // Asigna los goles a favor y en contra a cada equipo
+  setGoals(goals, goalsAgainst) {
+    this.goals += goals
+    this.goalsAgainst += goalsAgainst
+    this.goalsDiff = this.goals - this.goalsAgainst;
   }
+
+  //   // Asigna los goles a favor y en contra a cada equipo
+  // setGoals(team, goals, goalsAgainst) {
+  //   team.goals += goals
+  //   team.goalsAgainst += goalsAgainst
+  // }
 }

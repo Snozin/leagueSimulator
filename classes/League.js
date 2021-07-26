@@ -18,18 +18,11 @@ export class League {
     console.log("||***|| Comienza el torneo! ||***||");
     console.log("====================================\n");
 
-    // Mezclar aleatoriamente el array de equipos
-    this.raffleTeams(teams);
-    // Crear los 6 grupos de 4 equipos
-    this.makeGroups(this.randomizedTeams);
+    // // Mezclar aleatoriamente el array de equipos
+    // this.raffleTeams(teams);  Movido a setupGroupStage
 
-    // Fase de grupos todos contra todos
-    this.groups.forEach((group) => {
-      this.roundRobin(group.members);
-    });
-
-    
-
+    // Configurar fase de grupos
+    this.setupGroupStage(teams);
 
     // console.log("==================");
     // console.log("|!| Participantes: \n");
@@ -158,7 +151,26 @@ export class League {
     return winners;
   }
 
-  
+  setupGroupStage(teams) {
+    // Mezclar aleatoriamente el array de equipos
+    this.raffleTeams(teams);
+
+    // Guardar en groups un array con 6 grupos de 4 equipos
+    this.makeGroups(this.randomizedTeams);
+
+    // Enfrentar cada equipo de un grupo con los demás del grupo
+    // y asignar puntos por victoria, por empate y goles
+    this.groups.forEach((group) => {
+      this.allVsAll(group.members);
+    });
+
+    // Ordenar los equipos dentro del grupo en función de puntos,
+    // diferencia de goles o alfabético.
+    this.groups.forEach((group) => {
+    this.sortGroups(group.members);
+    });
+  }
+
   makeGroups(teams = [], group = 0) {
     // Condición de salida de la recursividad
     if (teams.length == 0) {
@@ -174,39 +186,103 @@ export class League {
       4: "E",
       5: "F",
     };
-
     const newGroup = {
       group: `${names[group]}`,
       members: [],
     };
 
-    // Añadir 4 elementos al array miembros del grupo
+    // Añadir 4 equipos al array miembros del grupo
     let counter = 0;
     while (counter < 4) {
       newGroup.members.push(teams.shift());
       counter++;
     }
 
-    // Añadir cada grupo de equipos al array final y repetir
+    // Añadir cada grupo de equipos al array grupos y repetir
     this.groups.push(newGroup);
     this.makeGroups(teams, ++group);
   }
 
-  
-  roundRobin(teams = [1, 2, 3, 4]) {
-    for (let i = 0; i < teams.length - 1; i++) {
-      console.log(teams[i], "VS ", teams[teams.length - 1]);
-      
+  /** DISCLAIMER: Algoritmo improvisado intentando simplificar el de clase. Sorry! **/
+  allVsAll(teams = []) {
+    /** Recorre el array de equipos -1 porque el número de enfrentamientos de todos
+     * contra todos para un número par de equipos es N -1. En nuestro caso siempre
+     * son 4 equipos, por lo que serán 3 iteraciones del for.
+     * En cada iteración se juegan 1 partido fijo: [i] VS 4, y un partido opcional:
+     * [i] VS 3, siempre que [i] != 3. Cuando se incumple la condición se añade el
+     * partido 1 VS 2 faltante. */
 
-      if (teams[i] !== teams[teams.length - 2]) {
-        console.log(teams[i], "VS ", teams[teams.length - 2]);
-      } else {
-        
-        console.log(teams[0], "VS ", teams[1]);
+    /** Salida esperada:
+     * 1 VS 4
+     * 1 VS 3
+     * -- -- --
+     * 2 VS 4
+     * 2 VS 3
+     * -- -- --
+     * 3 VS 4
+     * 1 VS 2
+     */
+    for (let i = 0; i < teams.length - 1; i++) {
+      this.playMatch(teams[i], teams[teams.length - 1]);
+      // Me parecía más simple con el ternario.
+      teams[i] !== teams[teams.length - 2]
+        ? this.playMatch(teams[i], teams[teams.length - 2])
+        : this.playMatch(teams[0], teams[1]);
+
+      // if (teams[i] !== teams[teams.length - 2]) {
+      //   this.playMatch(teams[i], teams[teams.length - 2]);
+      // } else {
+      //   this.playMatch(teams[0], teams[1]);
+      // }
+    }
+    /** Es un poco triquiñuela que juegue cada equipo 2 partidos el mismo día :') **/
+  }
+
+  // Enfrentar 2 equipos y asignar puntos por victoria o empate
+  playMatch(teamA, teamB) {
+    const goalsA = teamA.play();
+    const goalsB = teamB.play();
+
+    teamA.setGoals(goalsA, goalsB);
+    teamB.setGoals(goalsB, goalsA);
+
+    if (goalsA > goalsB) {
+      teamA.points += this.pointsPerWin;
+    } else if (goalsA === goalsB) {
+      teamA.points += this.pointsPerDraw;
+      teamB.points += this.pointsPerDraw;
+    } else {
+      teamB.points += this.pointsPerWin;
+    }
+  }
+
+  sortGroups(teams = this.groups[0].members) {
+    for (let i = 0; i < teams.length; i++) {
+      for (let j = 0; j < teams.length - i - 1; j++) {
+        // Ordenar por mayor número de puntos
+        if (teams[j].points < teams[j + 1].points) {
+          let tmp = teams[j + 1];
+          teams[j + 1] = teams[j];
+          teams[j] = tmp;
+        }
+        // Ordenar por diferencia de goles si tienen mismos puntos
+        if (teams[j].points == teams[j + 1].points) {
+          if (teams[j].goalsDiff < teams[j + 1].goalsDiff) {
+            let tmp = teams[j + 1];
+            teams[j + 1] = teams[j];
+            teams[j] = tmp;
+          }
+          // Ordenar alfabéticamente si tienen misma diferencia de goles
+          if (teams[j].goalsDiff == teams[j + 1].goalsDiff) {
+            if (teams[j].name > teams[j + 1].name) {
+              let tmp = teams[j];
+              teams[j] = teams[j + 1];
+              teams[j + 1] = tmp;
+            }
+          }
+        }
       }
     }
-
-    console.log("SALTO: \n\n\n");
   }
 
   displayResults() {
