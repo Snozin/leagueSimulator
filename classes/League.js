@@ -158,16 +158,17 @@ export class League {
     // Guardar en groups un array con 6 grupos de 4 equipos
     this.makeGroups(this.randomizedTeams);
 
-    // Enfrentar cada equipo de un grupo con los demás del grupo
-    // y asignar puntos por victoria, por empate y goles
-    this.groups.forEach((group) => {
-      this.allVsAll(group.members);
-    });
+    // Mostrar por consola los grupos resultantes
+    // this.displayGroups(this.groups);
+
+    // Ordenar los equipos en 3 jornadas para que cada equipo del
+    // grupo se enfrente con los demás del grupo
+    this.allVsAll(this.groups);
 
     // Ordenar los equipos dentro del grupo en función de puntos,
     // diferencia de goles o alfabético.
     this.groups.forEach((group) => {
-    this.sortGroups(group.members);
+      this.sortGroups(group.members);
     });
   }
 
@@ -179,15 +180,16 @@ export class League {
 
     // El parámetro group recibido será el nombre del grupo
     const names = {
-      0: "A",
-      1: "B",
-      2: "C",
-      3: "D",
-      4: "E",
-      5: "F",
+      0: "Grupo A",
+      1: "Grupo B",
+      2: "Grupo C",
+      3: "Grupo D",
+      4: "Grupo E",
+      5: "Grupo F",
     };
     const newGroup = {
-      group: `${names[group]}`,
+      groupName: `${names[group]}`,
+      matchDays: { Day1: [], Day2: [], Day3: [] },
       members: [],
     };
 
@@ -203,39 +205,74 @@ export class League {
     this.makeGroups(teams, ++group);
   }
 
-  /** DISCLAIMER: Algoritmo improvisado intentando simplificar el de clase. Sorry! **/
-  allVsAll(teams = []) {
-    /** Recorre el array de equipos -1 porque el número de enfrentamientos de todos
-     * contra todos para un número par de equipos es N -1. En nuestro caso siempre
-     * son 4 equipos, por lo que serán 3 iteraciones del for.
-     * En cada iteración se juegan 1 partido fijo: [i] VS 4, y un partido opcional:
-     * [i] VS 3, siempre que [i] != 3. Cuando se incumple la condición se añade el
-     * partido 1 VS 2 faltante. */
+  allVsAll(groups = []) {
+    /** DISCLAIMER: Algoritmo improvisado intentando simplificar el de clase. Sorry! **/
+    const randomizeMatches = (teams, matchDays) => {
+      // TODO organizar los match days internos del objeto para que no se repita
+      // el mismo equipo en 2 partidos de 1 día.
+      const matches = [];
+      /** En cada iteración se juegan 1 partido fijo: [i] VS 4, y un partido opcional:
+       * [i] VS 3, siempre que [i] != 3. Cuando se incumple la condición se añade el
+       * partido 1 VS 2 faltante. */
+      for (let i = 0; i < teams.length - 1; i++) {
+        matches.push(teams[i], teams[teams.length - 1]);
 
-    /** Salida esperada:
-     * 1 VS 4
-     * 1 VS 3
-     * -- -- --
-     * 2 VS 4
-     * 2 VS 3
-     * -- -- --
-     * 3 VS 4
-     * 1 VS 2
-     */
-    for (let i = 0; i < teams.length - 1; i++) {
-      this.playMatch(teams[i], teams[teams.length - 1]);
-      // Me parecía más simple con el ternario.
-      teams[i] !== teams[teams.length - 2]
-        ? this.playMatch(teams[i], teams[teams.length - 2])
-        : this.playMatch(teams[0], teams[1]);
+        if (teams[i] !== teams[teams.length - 2]) {
+          matches.push(teams[i], teams[teams.length - 2]);
+        } else {
+          matches.push(teams[0], teams[1]);
+        }
+      }
+      /** Salida esperada:
+       * 1 VS 4
+       * 1 VS 3
+       * -- -- --
+       * 2 VS 4
+       * 2 VS 3
+       * -- -- --
+       * 3 VS 4
+       * 1 VS 2
+       */
 
-      // if (teams[i] !== teams[teams.length - 2]) {
-      //   this.playMatch(teams[i], teams[teams.length - 2]);
-      // } else {
-      //   this.playMatch(teams[0], teams[1]);
-      // }
-    }
-    /** Es un poco triquiñuela que juegue cada equipo 2 partidos el mismo día :') **/
+      // Solución loca para arreglar que un equipo no juegue 2
+      // partidos el mismo día
+      let teamCounter = 0;
+      let matchCounter = 0;
+      while (matches.length > 0) {
+        if (teamCounter < 4) {
+          if (matchCounter !== 1) {
+            matchDays[`Day${matchCounter + 1}`].push(matches.pop());
+          }
+          if (matchCounter == 1 && teamCounter < 2) {
+            matchDays[`Day${matchCounter + 1}`].push(matches.pop());
+          }
+          if (matchCounter == 1 && teamCounter > 1) {
+            matchDays[`Day${matchCounter + 1}`].push(matches.shift());
+          }
+          teamCounter++;
+        }
+        if (teamCounter == 4) {
+          teamCounter = 0;
+          matchCounter++;
+        }
+      }
+      /** Salida esperada:
+       * 1 VS 2
+       * 3 VS 4
+       * -- -- --
+       * 2 VS 3
+       * 1 VS 4
+       * -- -- --
+       * 2 VS 4
+       * 1 VS 3
+       */
+    };
+
+    // Recorrer los grupos y crear las jornadas aleatorias
+    groups.forEach((group) => {
+      randomizeMatches(group.members, group.matchDays);
+    });
+    console.log(this.groups);
   }
 
   // Enfrentar 2 equipos y asignar puntos por victoria o empate
@@ -285,7 +322,18 @@ export class League {
     }
   }
 
-  displayResults() {
-    // TODO recibe cosas y las muestra en forma de tabla
+  displayGroups(groups = []) {
+    groups.forEach((group) => {
+      console.log(`\n[!] ${group.groupName}`);
+      console.log("==================");
+      group.members.forEach((team) => {
+        console.log(`[·] ${team.name}`);
+      });
+    });
+  }
+
+  displayGroupMatches() {
+    // TODO Mostrar ordenados los partidos de cada grupo sin que se repitan
+    // equipos el mismo día.
   }
 }
