@@ -12,37 +12,28 @@ export class League {
   }
 
   startLeague(teams = []) {
-    // TODO finalizar logica de liga. Extraer los mensajes
-    // al archivo main.
-    console.log("\n====================================");
-    console.log("||***|| Comienza el torneo! ||***||");
-    console.log("====================================\n");
-
-    // // Mezclar aleatoriamente el array de equipos
-    // this.raffleTeams(teams);  Movido a setupGroupStage
+    // TODO finalizar logica de liga.
 
     // Configurar fase de grupos
     this.setupGroupStage(teams);
 
-    // console.log("==================");
-    // console.log("|!| Participantes: \n");
-    // this.randomizedTeams.forEach((team) => console.log("|·|", team.name));
-    // console.log("==================");
+    // Jugar la fase de grupos
+    this.playGroupStage(this.groups);
+  }
 
-    let aux = [...this.randomizedTeams];
-    // this.playOffWinners = this.playMatches(aux);
-    // console.log("Playoff:", this.playOffWinners);
+  // Configurar la fase de equipos
+  setupGroupStage(teams) {
+    this.raffleTeams(teams);
 
-    aux = [...this.playOffWinners];
-    // this.quarterWinners = this.playMatches(aux);
-    // console.log("Quarters:", this.quarterWinners);
+    // Crear los 6 grupos de 4 equipos mezclados antes
+    this.makeGroups(this.randomizedTeams);
 
-    // aux = [...this.quarterWinners]
-    // this.semifinalWinners = this.playMatches(aux)
-    // console.log('Semifinal:', this.semifinalWinners)
+    // Ordenar los equipos en 3 jornadas para que cada equipo del
+    // grupo se enfrente con los demás del grupo
+    this.allVsAll(this.groups);
 
-    // this.playPlayoffs();
-    // this.playQuarterFinals();
+    // Mostrar por consola los grupos resultantes
+    this.displayGroups(this.groups);
   }
 
   raffleTeams(teams = []) {
@@ -53,6 +44,210 @@ export class League {
       this.raffleTeams(teams);
     } else {
       this.randomizedTeams = this.randomizedTeams.flat();
+    }
+  }
+
+  makeGroups(teams = [], group = 0) {
+    // Condición de salida de la recursividad
+    if (teams.length == 0) {
+      return;
+    }
+
+    // El parámetro group recibido será el nombre del grupo
+    const names = {
+      0: "Grupo A",
+      1: "Grupo B",
+      2: "Grupo C",
+      3: "Grupo D",
+      4: "Grupo E",
+      5: "Grupo F",
+    };
+    const newGroup = {
+      groupName: `${names[group]}`,
+      matchDays: { day1: [], day2: [], day3: [] },
+      members: [],
+    };
+
+    // Añadir 4 equipos al array miembros del grupo
+    let counter = 0;
+    while (counter < 4) {
+      newGroup.members.push(teams.shift());
+      counter++;
+    }
+
+    // Añadir cada grupo de equipos al array grupos y repetir
+    this.groups.push(newGroup);
+    this.makeGroups(teams, ++group);
+  }
+
+  allVsAll(groups = []) {
+    /** DISCLAIMER: Algoritmo improvisado intentando simplificar el de clase. Sorry! **/
+    const randomizeMatches = (teams, matchDays) => {
+      const matches = [];
+      /** En cada iteración se juegan 1 partido fijo: [i] VS 4, y un partido opcional:
+       * [i] VS 3, siempre que [i] != 3. Cuando se incumple la condición se añade el
+       * partido 1 VS 2 faltante. */
+      for (let i = 0; i < teams.length - 1; i++) {
+        matches.push(teams[i], teams[teams.length - 1]);
+        if (teams[i] !== teams[teams.length - 2]) {
+          matches.push(teams[i], teams[teams.length - 2]);
+        } else {
+          matches.push(teams[0], teams[1]);
+        }
+      }
+      /** Salida esperada:
+       * 1 VS 4
+       * 1 VS 3
+       * -- -- --
+       * 2 VS 4
+       * 2 VS 3
+       * -- -- --
+       * 3 VS 4
+       * 1 VS 2
+       */
+
+      // Solución loca para que un equipo no juegue 2 partidos el mismo día
+      let teamCounter = 0;
+      let matchCounter = 0;
+      while (matches.length > 0) {
+        if (teamCounter < 4) {
+          if (matchCounter !== 1) {
+            matchDays[`day${matchCounter + 1}`].push(matches.pop());
+          }
+          if (matchCounter == 1 && teamCounter < 2) {
+            matchDays[`day${matchCounter + 1}`].push(matches.pop());
+          }
+          if (matchCounter == 1 && teamCounter > 1) {
+            matchDays[`day${matchCounter + 1}`].push(matches.shift());
+          }
+          teamCounter++;
+        }
+        if (teamCounter == 4) {
+          teamCounter = 0;
+          matchCounter++;
+        }
+      }
+      /** Salida esperada:
+       * 1 VS 2
+       * 3 VS 4
+       * -- -- --
+       * 2 VS 3
+       * 1 VS 4
+       * -- -- --
+       * 2 VS 4
+       * 1 VS 3
+       */
+    };
+
+    // Recorrer los grupos y crear las jornadas aleatorias
+    groups.forEach((group) => {
+      randomizeMatches(group.members, group.matchDays);
+    });
+  }
+
+  displayGroups(groups = []) {
+    console.log("======================================");
+    console.log("||***|| Grupos y equipos ||***||");
+    console.log("======================================");
+
+    groups.forEach((group) => {
+      console.log(`\n[!] ${group.groupName}`);
+      console.log("========================");
+
+      group.members.forEach((team) => {
+        console.log(`[-] ${team.name}`);
+      });
+      let counter = 0;
+      for (const day in group.matchDays) {
+        counter++;
+        console.log(`\n[!] Jornada ${counter}:`);
+
+        for (let i = 0; i < group.matchDays[day].length; i += 2) {
+          console.log(
+            "[-]",
+            group.matchDays[day][i].name,
+            "VS",
+            group.matchDays[day][i + 1].name
+          );
+        }
+      }
+    });
+  }
+
+  // Mostrar los resultados de la fase de grupos ordenados por puntos
+  playGroupStage(groups = []) {
+    console.log("\n\n======================================");
+    console.log("||***|| Comienza la EUROCOPA!! ||***||");
+    console.log("======================================");
+
+    groups.forEach((group) => {
+      const { matchDays } = group;
+      let counter = 0;
+      for (const day in matchDays) {
+        const [team1, team2, team3, team4] = matchDays[day];
+        counter++;
+        console.log("\n________________________\n");
+        console.log(`[!] ${group.groupName} - Jornada ${counter}:`);
+        console.log("========================");
+        const [goals1, goals2] = this.playMatch(team1, team2);
+        console.log(`[-] ${team1.name} ${goals1} - ${team2.name} ${goals2}`);
+
+        const [goals3, goals4] = this.playMatch(team3, team4);
+        console.log(`[-] ${team3.name} ${goals3} - ${team4.name} ${goals4}`);
+        this.sortGroups(group.members);
+        console.table(group.members);
+      }
+    });
+  }
+
+  // Enfrentar 2 equipos y asignar puntos por victoria o empate y retornar
+  // los goles obtenidos por cada equipo.
+  playMatch(teamA, teamB) {
+    const goalsA = teamA.play();
+    const goalsB = teamB.play();
+
+    teamA.setGoals(goalsA, goalsB);
+    teamB.setGoals(goalsB, goalsA);
+
+    if (goalsA > goalsB) {
+      teamA.points += this.pointsPerWin;
+    } else if (goalsA === goalsB) {
+      teamA.points += this.pointsPerDraw;
+      teamB.points += this.pointsPerDraw;
+    } else {
+      teamB.points += this.pointsPerWin;
+    }
+    return [goalsA, goalsB];
+  }
+
+  // Ordenar los equipos dentro del grupo en función de puntos,
+  // diferencia de goles o alfabético.
+  sortGroups(teams = this.groups[0].members) {
+    for (let i = 0; i < teams.length; i++) {
+      for (let j = 0; j < teams.length - i - 1; j++) {
+        // Ordenar por mayor número de puntos
+        if (teams[j].points < teams[j + 1].points) {
+          let tmp = teams[j + 1];
+          teams[j + 1] = teams[j];
+          teams[j] = tmp;
+        }
+        // Ordenar por diferencia de goles si tienen mismos puntos
+        if (teams[j].points == teams[j + 1].points) {
+          if (teams[j].goalsDiff < teams[j + 1].goalsDiff) {
+            let tmp = teams[j + 1];
+            teams[j + 1] = teams[j];
+            teams[j] = tmp;
+          }
+          // Ordenar alfabéticamente si tienen misma diferencia de goles
+          if (teams[j].goalsDiff == teams[j + 1].goalsDiff) {
+            if (teams[j].name > teams[j + 1].name) {
+              let tmp = teams[j];
+              teams[j] = teams[j + 1];
+              teams[j + 1] = tmp;
+            }
+          }
+        }
+      }
     }
   }
 
@@ -149,191 +344,5 @@ export class League {
       console.log("|!| Fin de la ronda");
     }
     return winners;
-  }
-
-  setupGroupStage(teams) {
-    // Mezclar aleatoriamente el array de equipos
-    this.raffleTeams(teams);
-
-    // Guardar en groups un array con 6 grupos de 4 equipos
-    this.makeGroups(this.randomizedTeams);
-
-    // Mostrar por consola los grupos resultantes
-    // this.displayGroups(this.groups);
-
-    // Ordenar los equipos en 3 jornadas para que cada equipo del
-    // grupo se enfrente con los demás del grupo
-    this.allVsAll(this.groups);
-
-    // Ordenar los equipos dentro del grupo en función de puntos,
-    // diferencia de goles o alfabético.
-    this.groups.forEach((group) => {
-      this.sortGroups(group.members);
-    });
-  }
-
-  makeGroups(teams = [], group = 0) {
-    // Condición de salida de la recursividad
-    if (teams.length == 0) {
-      return;
-    }
-
-    // El parámetro group recibido será el nombre del grupo
-    const names = {
-      0: "Grupo A",
-      1: "Grupo B",
-      2: "Grupo C",
-      3: "Grupo D",
-      4: "Grupo E",
-      5: "Grupo F",
-    };
-    const newGroup = {
-      groupName: `${names[group]}`,
-      matchDays: { Day1: [], Day2: [], Day3: [] },
-      members: [],
-    };
-
-    // Añadir 4 equipos al array miembros del grupo
-    let counter = 0;
-    while (counter < 4) {
-      newGroup.members.push(teams.shift());
-      counter++;
-    }
-
-    // Añadir cada grupo de equipos al array grupos y repetir
-    this.groups.push(newGroup);
-    this.makeGroups(teams, ++group);
-  }
-
-  allVsAll(groups = []) {
-    /** DISCLAIMER: Algoritmo improvisado intentando simplificar el de clase. Sorry! **/
-    const randomizeMatches = (teams, matchDays) => {
-      // TODO organizar los match days internos del objeto para que no se repita
-      // el mismo equipo en 2 partidos de 1 día.
-      const matches = [];
-      /** En cada iteración se juegan 1 partido fijo: [i] VS 4, y un partido opcional:
-       * [i] VS 3, siempre que [i] != 3. Cuando se incumple la condición se añade el
-       * partido 1 VS 2 faltante. */
-      for (let i = 0; i < teams.length - 1; i++) {
-        matches.push(teams[i], teams[teams.length - 1]);
-
-        if (teams[i] !== teams[teams.length - 2]) {
-          matches.push(teams[i], teams[teams.length - 2]);
-        } else {
-          matches.push(teams[0], teams[1]);
-        }
-      }
-      /** Salida esperada:
-       * 1 VS 4
-       * 1 VS 3
-       * -- -- --
-       * 2 VS 4
-       * 2 VS 3
-       * -- -- --
-       * 3 VS 4
-       * 1 VS 2
-       */
-
-      // Solución loca para arreglar que un equipo no juegue 2
-      // partidos el mismo día
-      let teamCounter = 0;
-      let matchCounter = 0;
-      while (matches.length > 0) {
-        if (teamCounter < 4) {
-          if (matchCounter !== 1) {
-            matchDays[`Day${matchCounter + 1}`].push(matches.pop());
-          }
-          if (matchCounter == 1 && teamCounter < 2) {
-            matchDays[`Day${matchCounter + 1}`].push(matches.pop());
-          }
-          if (matchCounter == 1 && teamCounter > 1) {
-            matchDays[`Day${matchCounter + 1}`].push(matches.shift());
-          }
-          teamCounter++;
-        }
-        if (teamCounter == 4) {
-          teamCounter = 0;
-          matchCounter++;
-        }
-      }
-      /** Salida esperada:
-       * 1 VS 2
-       * 3 VS 4
-       * -- -- --
-       * 2 VS 3
-       * 1 VS 4
-       * -- -- --
-       * 2 VS 4
-       * 1 VS 3
-       */
-    };
-
-    // Recorrer los grupos y crear las jornadas aleatorias
-    groups.forEach((group) => {
-      randomizeMatches(group.members, group.matchDays);
-    });
-    console.log(this.groups);
-  }
-
-  // Enfrentar 2 equipos y asignar puntos por victoria o empate
-  playMatch(teamA, teamB) {
-    const goalsA = teamA.play();
-    const goalsB = teamB.play();
-
-    teamA.setGoals(goalsA, goalsB);
-    teamB.setGoals(goalsB, goalsA);
-
-    if (goalsA > goalsB) {
-      teamA.points += this.pointsPerWin;
-    } else if (goalsA === goalsB) {
-      teamA.points += this.pointsPerDraw;
-      teamB.points += this.pointsPerDraw;
-    } else {
-      teamB.points += this.pointsPerWin;
-    }
-  }
-
-  sortGroups(teams = this.groups[0].members) {
-    for (let i = 0; i < teams.length; i++) {
-      for (let j = 0; j < teams.length - i - 1; j++) {
-        // Ordenar por mayor número de puntos
-        if (teams[j].points < teams[j + 1].points) {
-          let tmp = teams[j + 1];
-          teams[j + 1] = teams[j];
-          teams[j] = tmp;
-        }
-        // Ordenar por diferencia de goles si tienen mismos puntos
-        if (teams[j].points == teams[j + 1].points) {
-          if (teams[j].goalsDiff < teams[j + 1].goalsDiff) {
-            let tmp = teams[j + 1];
-            teams[j + 1] = teams[j];
-            teams[j] = tmp;
-          }
-          // Ordenar alfabéticamente si tienen misma diferencia de goles
-          if (teams[j].goalsDiff == teams[j + 1].goalsDiff) {
-            if (teams[j].name > teams[j + 1].name) {
-              let tmp = teams[j];
-              teams[j] = teams[j + 1];
-              teams[j + 1] = tmp;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  displayGroups(groups = []) {
-    groups.forEach((group) => {
-      console.log(`\n[!] ${group.groupName}`);
-      console.log("==================");
-      group.members.forEach((team) => {
-        console.log(`[·] ${team.name}`);
-      });
-    });
-  }
-
-  displayGroupMatches() {
-    // TODO Mostrar ordenados los partidos de cada grupo sin que se repitan
-    // equipos el mismo día.
   }
 }
