@@ -19,10 +19,17 @@ export class Team {
   }
 
   // Asigna los goles a favor y en contra a cada equipo
-  setGoals(goals, goalsAgainst) {
-    this.goals += goals
-    this.goalsAgainst += goalsAgainst
+  setGoals(goals = 0, goalsAgainst = 0) {
+    this.goals += goals;
+    this.goalsAgainst += goalsAgainst;
     this.goalsDiff = this.goals - this.goalsAgainst;
+  }
+
+  // Resetear los goles
+  resetGoals() {
+    this.goals = 0;
+    this.goalsAgainst = 0;
+    this.goalsDiff = 0;
   }
 
   //   // Asigna los goles a favor y en contra a cada equipo

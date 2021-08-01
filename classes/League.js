@@ -5,10 +5,10 @@ export class League {
     this.groups = [];
     this.pointsPerWin = 3;
     this.pointsPerDraw = 1;
+    this.cualifiedTeams = {};
 
-    this.playOffWinners = [];
-    this.quarterWinners = [];
     this.semifinalWinners = [];
+    this.semifinalLosers = [];
   }
 
   startLeague(teams = []) {
@@ -19,10 +19,26 @@ export class League {
 
     // Jugar la fase de grupos
     this.playGroupStage(this.groups);
+
+    // Configurar los playoff
+    this.setupPlayoffs(this.groups);
+
+    // Jugar los playoff
+    this.playPlayoffs(this.cualifiedTeams);
+
+    // Jugar los cuartos de final
+    this.playQuarterFinals(this.cualifiedTeams);
+
+    // jugar la semifinal
+    this.playSemifinals(this.cualifiedTeams);
+
+    // Jugar final
+    this.playFinal(this.semifinalWinners);
   }
 
   // Configurar la fase de equipos
   setupGroupStage(teams) {
+    // Mezclar aleatoriamente el array de equipos
     this.raffleTeams(teams);
 
     // Crear los 6 grupos de 4 equipos mezclados antes
@@ -174,7 +190,8 @@ export class League {
     });
   }
 
-  // Mostrar los resultados de la fase de grupos ordenados por puntos
+  // Jugar la fase de grupos y mostrar los resultados ordenados por
+  // puntos > diferencia de goles > alfabético
   playGroupStage(groups = []) {
     console.log("\n\n======================================");
     console.log("||***|| Comienza la EUROCOPA!! ||***||");
@@ -222,7 +239,7 @@ export class League {
 
   // Ordenar los equipos dentro del grupo en función de puntos,
   // diferencia de goles o alfabético.
-  sortGroups(teams = this.groups[0].members) {
+  sortGroups(teams = []) {
     for (let i = 0; i < teams.length; i++) {
       for (let j = 0; j < teams.length - i - 1; j++) {
         // Ordenar por mayor número de puntos
@@ -251,48 +268,155 @@ export class League {
     }
   }
 
-  playPlayoffs() {
-    // TODO refactor para extrapolarlo al método principal
-    const participants = [...this.randomizedTeams];
+  // Crear la configuración de equipos clasificados para los playoff
+  setupPlayoffs(groups = []) {
+    const firsts = [];
+    const seconds = [];
+    const thirds = [];
+    groups.forEach((group) => {
+      firsts.push(group.members.shift());
+      seconds.push(group.members.shift());
+      thirds.push(group.members.shift());
+    });
+    // Ordenar los terceros
+    this.sortGroups(thirds);
+    // Descartar los 2 últimos
+    thirds.pop();
+    thirds.pop();
 
-    console.log("\n====================================");
-    console.log("||***|| PlayOffs! ||***||");
-    console.log("====================================\n");
-
-    this.playOffWinners = this.playMatches(participants);
-
-    console.log("==================");
-    console.log("|!| Clasificados PlayOff: \n");
-    this.playOffWinners.forEach((team) => console.log("|·|", team.name));
-    console.log("==================");
+    // total: 16 /2  = 8
+    let index = 0;
+    while (index < 8) {
+      index++;
+      this.cualifiedTeams[`q${index}`] = [];
+      if (firsts.length > 0) {
+        this.cualifiedTeams[`q${index}`].push(firsts.shift(), seconds.pop());
+      }
+      if (index > 6) {
+        this.cualifiedTeams[`q${index}`].push(thirds.shift(), thirds.pop());
+      }
+    }
+    // La tabla de clasificación queda:
+    // A1 B1 C1 D1 E1 F1 ?3 ?3
+    // F2 E2 D2 C2 B2 A2 ?3 ?3
+    // Es un poco triqui, pero cumple que no se repitan del mismo grupo.
   }
 
-  playQuarterFinals() {
-    // TODO refactor extrapolarlo al método principal
-    const participants = [...this.playOffWinners];
-
-    console.log("\n====================================");
-    console.log("||***|| Cuartos de Final! ||***||");
-    console.log("====================================\n");
-
-    this.quarterWinners = this.playMatches(participants);
-
-    console.log("==================");
-    console.log("|!| Clasificados Cuartos de Final: \n");
-    this.quarterWinners.forEach((team) => console.log("|·|", team.name));
-    console.log("==================");
+  playPlayoffs(cualifiedTeams = {}) {
+    console.log("\n======================================");
+    console.log("||***|| Octavos de Final ||***||");
+    console.log("======================================\n");
+    Object.values(cualifiedTeams).forEach((team, index) => {
+      const winner = this.knockoutMatch(team[0], team[1]);
+      console.log(
+        `${team[0].name} ${team[0].goals} - ${team[1].goals} ${team[1].name} => ${team[winner].name}`
+      );
+      this.cualifiedTeams[`q${index + 1}`] = team[winner];
+    });
   }
 
-  playSemifinals() {
-    //TODO Guardar los 2 equipos que se enfrentan por el 3 y 4
-    // puesto y los 2 que se enfrentan por el 1 y 2 puesto
-    const participants = [...this.quarterWinners];
+  playQuarterFinals(cualifiedTeams = {}) {
+    console.log("\n======================================");
+    console.log("||***|| Cuartos de Final ||***||");
+    console.log("======================================\n");
+    const quarterTeams = Object.values(cualifiedTeams);
+    this.cualifiedTeams = {};
 
-    const teamA = participants[0];
-    const teamB = participants[participants.length - 1];
+    for (let i = 0; i <= quarterTeams.length + 1; i++) {
+      const match = [quarterTeams.shift(), quarterTeams.pop()];
+      const winner = this.knockoutMatch(match[0], match[1]);
+      console.log(
+        `${match[0].name} - ${match[0].goals} ${match[1].goals} ${match[1].name} => ${match[winner].name}`
+      );
+      this.cualifiedTeams[`q${i + 1}`] = match[winner];
+    }
+  }
 
-    const teamAGoals = teamA.play();
-    const teamBGoals = teamB.play();
+  // Retornar 0 si gana A o 1 si gana B. Si tienen los mismos
+  // goles se vuelve a jugar.
+  knockoutMatch(teamA, teamB) {
+    teamA.resetGoals();
+    teamB.resetGoals();
+
+    const goalsA = teamA.play();
+    const goalsB = teamB.play();
+
+    if (goalsA == goalsB) {
+      this.knockoutMatch(teamA, teamB);
+    }
+
+    teamA.setGoals(goalsA);
+    teamB.setGoals(goalsB);
+
+    if (goalsA > goalsB) {
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+
+  playSemifinals(cualifiedTeams = {}) {
+    console.log("\n======================================");
+    console.log("||***|| Semifinal ||***||");
+    console.log("======================================\n");
+    const semifinalTeams = Object.values(cualifiedTeams);
+    let q1 = [];
+    let q2 = [];
+    for (let i = 0; i < semifinalTeams.length; i++) {
+      if (i % 2 === 0) {
+        q2.push(semifinalTeams[i]);
+      } else {
+        q1.push(semifinalTeams[i]);
+      }
+    }
+    const q1index = this.knockoutMatch(q1[0], q1[1]);
+    const q2index = this.knockoutMatch(q2[0], q2[1]);
+
+    let aux = [...q1];
+    let q1Winner = aux.splice(q1index, 1).pop();
+
+    this.semifinalLosers = [...aux];
+
+    aux = [...q2];
+    let q2Winner = aux.splice(q2index, 1).pop();
+
+    console.log(
+      `${q1[0].name} ${q1[0].goals} - ${q1[1].goals} ${q1[1].name} => ${q1Winner.name} `
+    );
+    console.log(
+      `${q2[0].name} ${q2[0].goals} - ${q2[1].goals} ${q2[1].name} => ${q2Winner.name} `
+    );
+    this.semifinalLosers.push([...aux].pop());
+    this.semifinalWinners.push(q1Winner, q2Winner);
+
+
+    console.log("\n======================================");
+    console.log("||***|| Tercer y Cuarto Puesto ||***||");
+    console.log("======================================\n");
+
+    const third = this.knockoutMatch(
+      this.semifinalLosers[0],
+      this.semifinalLosers[1]
+    );
+    
+    console.log(
+      `${this.semifinalLosers[0].name} ${this.semifinalLosers[0].goals} - ${this.semifinalLosers[1].goals} ${this.semifinalLosers[1].name} => ${this.semifinalLosers[third].name}`
+    );
+  }
+
+  playFinal(teams = []) {
+    console.log("\n======================================");
+    console.log("||***|| Final ||***||");
+    console.log("======================================\n");
+
+    const winner = this.knockoutMatch(teams[0], teams[1]);
+    console.log(
+      `${teams[0].name} ${teams[0].goals} - ${teams[1].goals} ${teams[1].name} => ${teams[winner].name}`
+    );
+
+    console.log("\n======================================");
+    console.log(`||***|| ${teams[winner].name} Campeón!!||***||`);
+    console.log("======================================\n");
   }
 
   playMatches(teams = [], winners = []) {
