@@ -323,7 +323,7 @@ export class League {
       const match = [quarterTeams.shift(), quarterTeams.pop()];
       const winner = this.knockoutMatch(match[0], match[1]);
       console.log(
-        `[-] ${match[0].name} - ${match[0].goals} ${match[1].goals} ${match[1].name} => ${match[winner].name}`
+        `[-] ${match[0].name} ${match[0].goals} - ${match[1].goals} ${match[1].name} => ${match[winner].name}`
       );
       this.cualifiedTeams[`q${i + 1}`] = match[winner];
     }
