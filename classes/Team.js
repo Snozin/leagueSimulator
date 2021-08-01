@@ -1,6 +1,5 @@
 export class Team {
   constructor(name = "unnamed") {
-    //TODO Añadir propiedades necesarias para la comparativa
     this.name = name;
     this.points = 0;
     this.goals = 0;
@@ -31,10 +30,4 @@ export class Team {
     this.goalsAgainst = 0;
     this.goalsDiff = 0;
   }
-
-  //   // Asigna los goles a favor y en contra a cada equipo
-  // setGoals(team, goals, goalsAgainst) {
-  //   team.goals += goals
-  //   team.goalsAgainst += goalsAgainst
-  // }
 }

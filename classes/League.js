@@ -11,8 +11,6 @@ export class League {
   }
 
   startLeague(teams = []) {
-    // TODO finalizar logica de liga.
-
     // Configurar fase de grupos
     this.setupGroupStage(teams);
 
