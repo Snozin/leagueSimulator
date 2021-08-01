@@ -6,7 +6,6 @@ export class League {
     this.pointsPerWin = 3;
     this.pointsPerDraw = 1;
     this.cualifiedTeams = {};
-
     this.semifinalWinners = [];
     this.semifinalLosers = [];
   }
@@ -309,7 +308,7 @@ export class League {
     Object.values(cualifiedTeams).forEach((team, index) => {
       const winner = this.knockoutMatch(team[0], team[1]);
       console.log(
-        `${team[0].name} ${team[0].goals} - ${team[1].goals} ${team[1].name} => ${team[winner].name}`
+        `[-] ${team[0].name} ${team[0].goals} - ${team[1].goals} ${team[1].name} => ${team[winner].name}`
       );
       this.cualifiedTeams[`q${index + 1}`] = team[winner];
     });
@@ -326,32 +325,9 @@ export class League {
       const match = [quarterTeams.shift(), quarterTeams.pop()];
       const winner = this.knockoutMatch(match[0], match[1]);
       console.log(
-        `${match[0].name} - ${match[0].goals} ${match[1].goals} ${match[1].name} => ${match[winner].name}`
+        `[-] ${match[0].name} - ${match[0].goals} ${match[1].goals} ${match[1].name} => ${match[winner].name}`
       );
       this.cualifiedTeams[`q${i + 1}`] = match[winner];
-    }
-  }
-
-  // Retornar 0 si gana A o 1 si gana B. Si tienen los mismos
-  // goles se vuelve a jugar.
-  knockoutMatch(teamA, teamB) {
-    teamA.resetGoals();
-    teamB.resetGoals();
-
-    const goalsA = teamA.play();
-    const goalsB = teamB.play();
-
-    if (goalsA == goalsB) {
-      this.knockoutMatch(teamA, teamB);
-    }
-
-    teamA.setGoals(goalsA);
-    teamB.setGoals(goalsB);
-
-    if (goalsA > goalsB) {
-      return 0;
-    } else {
-      return 1;
     }
   }
 
@@ -381,14 +357,13 @@ export class League {
     let q2Winner = aux.splice(q2index, 1).pop();
 
     console.log(
-      `${q1[0].name} ${q1[0].goals} - ${q1[1].goals} ${q1[1].name} => ${q1Winner.name} `
+      `[-] ${q1[0].name} ${q1[0].goals} - ${q1[1].goals} ${q1[1].name} => ${q1Winner.name} `
     );
     console.log(
-      `${q2[0].name} ${q2[0].goals} - ${q2[1].goals} ${q2[1].name} => ${q2Winner.name} `
+      `[-] ${q2[0].name} ${q2[0].goals} - ${q2[1].goals} ${q2[1].name} => ${q2Winner.name} `
     );
     this.semifinalLosers.push([...aux].pop());
     this.semifinalWinners.push(q1Winner, q2Winner);
-
 
     console.log("\n======================================");
     console.log("||***|| Tercer y Cuarto Puesto ||***||");
@@ -398,9 +373,9 @@ export class League {
       this.semifinalLosers[0],
       this.semifinalLosers[1]
     );
-    
+
     console.log(
-      `${this.semifinalLosers[0].name} ${this.semifinalLosers[0].goals} - ${this.semifinalLosers[1].goals} ${this.semifinalLosers[1].name} => ${this.semifinalLosers[third].name}`
+      `[-] ${this.semifinalLosers[0].name} ${this.semifinalLosers[0].goals} - ${this.semifinalLosers[1].goals} ${this.semifinalLosers[1].name} => ${this.semifinalLosers[third].name}`
     );
   }
 
@@ -411,7 +386,7 @@ export class League {
 
     const winner = this.knockoutMatch(teams[0], teams[1]);
     console.log(
-      `${teams[0].name} ${teams[0].goals} - ${teams[1].goals} ${teams[1].name} => ${teams[winner].name}`
+      `[-] ${teams[0].name} ${teams[0].goals} - ${teams[1].goals} ${teams[1].name} => ${teams[winner].name}`
     );
 
     console.log("\n======================================");
@@ -419,54 +394,26 @@ export class League {
     console.log("======================================\n");
   }
 
-  playMatches(teams = [], winners = []) {
-    // TODO cambiar la lógica para escoger el orden de los partidos
-    // en función de lo que responda Jordi
-    // Recibe un array de equipos participantes y devuelve un array de ganadores
-    if (teams.length >= 2) {
-      let teamA = teams[0];
-      let teamB = teams[teams.length - 1];
-      console.log("==================");
-      console.log("|!| Jugando... \n");
-      console.log(`|·| ${teamA.name} VS ${teamB.name}`);
-      console.log(`==================`);
+  // Retornar 0 si gana A o 1 si gana B. Si tienen los mismos
+  // goles se vuelve a jugar.
+  knockoutMatch(teamA, teamB) {
+    teamA.resetGoals();
+    teamB.resetGoals();
 
-      let teamAGoals = teamA.play();
-      let teamBGoals = teamB.play();
+    const goalsA = teamA.play();
+    const goalsB = teamB.play();
 
-      // Si no hay empate en el partido:
-      if (teamAGoals !== teamBGoals) {
-        // Settear goles de cada equipo
-        teamA.setGoals(teamA, teamAGoals, teamBGoals);
-        teamB.setGoals(teamB, teamBGoals, teamAGoals);
-
-        console.log(`|!| Resultado: \n`);
-        console.log(
-          `|·| ${teamA.name}: ${teamAGoals}  VS  ${teamB.name}: ${teamBGoals}`
-        );
-
-        if (teamAGoals > teamBGoals) {
-          // Guardar los ganadores
-          winners.push(teams.shift());
-          teams.pop();
-          console.log(`|!| Ganador ${teamA.name}!! `);
-        } else {
-          winners.push(teams.pop());
-          teams.shift();
-          console.log(`|!| Ganador ${teamB.name}!! `);
-        }
-        console.log(`==================\n\n`);
-        this.playMatches(teams, winners);
-      } else {
-        // Si hay empate se vuelve a jugar el partido
-        console.log(`|!| Resultado: \n`);
-        console.log(`|!| Empate a ${teamAGoals} !!!`);
-        console.log(`|!| Volviendo a jugar partido...`);
-        this.playMatches(teams, winners);
-      }
-    } else {
-      console.log("|!| Fin de la ronda");
+    if (goalsA == goalsB) {
+      this.knockoutMatch(teamA, teamB);
     }
-    return winners;
+
+    teamA.setGoals(goalsA);
+    teamB.setGoals(goalsB);
+
+    if (goalsA > goalsB) {
+      return 0;
+    } else {
+      return 1;
+    }
   }
 }
