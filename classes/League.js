@@ -401,17 +401,15 @@ export class League {
     const goalsA = teamA.play();
     const goalsB = teamB.play();
 
-    if (goalsA == goalsB) {
-      this.knockoutMatch(teamA, teamB);
-    }
-
     teamA.setGoals(goalsA);
     teamB.setGoals(goalsB);
 
     if (goalsA > goalsB) {
       return 0;
-    } else {
+    } else if (goalsA < goalsB) {
       return 1;
+    } else {
+      return this.knockoutMatch(teamA, teamB);
     }
   }
 }
