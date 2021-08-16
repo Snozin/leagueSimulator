@@ -301,6 +301,16 @@ export class League {
 
   playPlayoffs(cualifiedTeams = {}) {
     console.log("\n======================================");
+    console.log("||***|| Equipos Clasificados ||***||");
+    console.log("======================================\n");
+
+    Object.values(cualifiedTeams).forEach((teams)=>{
+      teams.forEach((team)=>{
+        console.log(`[-] ${team.name}`)
+      })
+    })
+
+    console.log("\n======================================");
     console.log("||***|| Octavos de Final ||***||");
     console.log("======================================\n");
     Object.values(cualifiedTeams).forEach((team, index) => {
