@@ -412,7 +412,7 @@ export class League {
     const goalsB = teamB.play();
 
     if (goalsA == goalsB) {
-      this.knockoutMatch(teamA, teamB);
+      return this.knockoutMatch(teamA, teamB);
     }
 
     teamA.setGoals(goalsA);
