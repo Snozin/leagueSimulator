@@ -22,5 +22,5 @@ export const teams = [
   "Spain",
   "Switzerland",
   "Ukraine",
-  "Wales"
-];
+  "Wales",
+]
